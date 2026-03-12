@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # CollegePortal – Django Project (Python 3.14 Compatible)
 
 A full-featured college management web portal built with Django.
