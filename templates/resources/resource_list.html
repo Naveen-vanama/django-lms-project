@@ -1,0 +1,164 @@
+{% extends 'base.html' %}
+{% block title %}Resources – {{ course.title }}{% endblock %}
+
+{% block content %}
+
+<h4 class="fw-bold mb-4">📂 Course Resources</h4>
+
+<div class="accordion" id="resourceAccordion">
+
+<!-- ================= VIDEO FOLDER ================= -->
+{% if videos %}
+<div class="accordion-item">
+  <h2 class="accordion-header">
+    <button class="accordion-button fw-bold folder-toggle text-danger"
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#videoFolder">
+      <span class="folder-icon me-2">📂</span>
+      Video Lectures ({{ videos|length }})
+    </button>
+  </h2>
+
+  <div id="videoFolder" class="accordion-collapse collapse show">
+    <div class="accordion-body">
+      <div class="row g-4">
+        {% for resource in videos %}
+            {% include "resources/partials/resource_card_full.html" %}
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- ================= LECTURE FOLDER ================= -->
+{% if lectures %}
+<div class="accordion-item">
+  <h2 class="accordion-header">
+    <button class="accordion-button collapsed fw-bold folder-toggle text-primary"
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#lectureFolder">
+      <span class="folder-icon me-2">📁</span>
+      Lecture Slides ({{ lectures|length }})
+    </button>
+  </h2>
+
+  <div id="lectureFolder" class="accordion-collapse collapse">
+    <div class="accordion-body">
+      <div class="row g-4">
+        {% for resource in lectures %}
+            {% include "resources/partials/resource_card_full.html" %}
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- ================= ASSIGNMENT FOLDER ================= -->
+{% if assignments %}
+<div class="accordion-item">
+  <h2 class="accordion-header">
+    <button class="accordion-button collapsed fw-bold folder-toggle text-warning"
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#assignmentFolder">
+      <span class="folder-icon me-2">📁</span>
+      Assignments ({{ assignments|length }})
+    </button>
+  </h2>
+
+  <div id="assignmentFolder" class="accordion-collapse collapse">
+    <div class="accordion-body">
+      <div class="row g-4">
+        {% for resource in assignments %}
+            {% include "resources/partials/resource_card_full.html" %}
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- ================= READING FOLDER ================= -->
+{% if readings %}
+<div class="accordion-item">
+  <h2 class="accordion-header">
+    <button class="accordion-button collapsed fw-bold folder-toggle text-success"
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#readingFolder">
+      <span class="folder-icon me-2">📁</span>
+      Reading Material ({{ readings|length }})
+    </button>
+  </h2>
+
+  <div id="readingFolder" class="accordion-collapse collapse">
+    <div class="accordion-body">
+      <div class="row g-4">
+        {% for resource in readings %}
+            {% include "resources/partials/resource_card_full.html" %}
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- ================= OTHERS FOLDER ================= -->
+{% if others %}
+<div class="accordion-item">
+  <h2 class="accordion-header">
+    <button class="accordion-button collapsed fw-bold folder-toggle text-secondary"
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#otherFolder">
+      <span class="folder-icon me-2">📁</span>
+      Others ({{ others|length }})
+    </button>
+  </h2>
+
+  <div id="otherFolder" class="accordion-collapse collapse">
+    <div class="accordion-body">
+      <div class="row g-4">
+        {% for resource in others %}
+            {% include "resources/partials/resource_card_full.html" %}
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+</div>
+
+<!-- ================= FOLDER ICON ANIMATION SCRIPT ================= -->
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    const folders = document.querySelectorAll(".folder-toggle");
+
+    folders.forEach(folder => {
+
+        folder.addEventListener("click", function () {
+
+            const icon = this.querySelector(".folder-icon");
+
+            setTimeout(() => {
+                if (this.classList.contains("collapsed")) {
+                    icon.textContent = "📁"; // closed
+                } else {
+                    icon.textContent = "📂"; // open
+                }
+            }, 200);
+
+        });
+
+    });
+
+});
+</script>
+
+{% endblock %}

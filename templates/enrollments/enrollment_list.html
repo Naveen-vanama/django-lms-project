@@ -1,0 +1,255 @@
+{% extends 'base.html' %}
+{% block title %}Enrollments{% endblock %}
+
+{% block extra_css %}
+<style>
+
+.enrollment-container {
+    background: rgba(255,255,255,0.9);
+    backdrop-filter: blur(15px);
+    border-radius: 25px;
+    padding: 35px;
+    box-shadow: 0 25px 60px rgba(0,0,0,0.1);
+}
+
+.table thead {
+    background: linear-gradient(90deg,#6366f1,#8b5cf6);
+    color: white;
+}
+
+.table th {
+    border: none;
+    font-weight: 600;
+}
+
+.table td {
+    vertical-align: middle;
+}
+
+.status-badge {
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.status-active {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.status-dropped {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.status-expired {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.access-badge {
+    padding: 5px 10px;
+    border-radius: 15px;
+    font-size: 0.75rem;
+}
+
+.btn-action {
+    border-radius: 12px;
+    font-size: 0.8rem;
+}
+
+</style>
+{% endblock %}
+
+{% block content %}
+
+<h3 class="fw-bold mb-4">📋 Enrollment Management</h3>
+
+<div class="enrollment-container">
+
+{% if not request.user.is_student %}
+
+<form method="GET" class="mb-4">
+
+<div class="input-group" style="max-width:400px;">
+
+<input
+type="text"
+name="q"
+class="form-control"
+placeholder="Search student by name or ID..."
+value="{{ search_query }}"
+>
+
+<button class="btn btn-primary">
+🔍 Search
+</button>
+
+<a href="{% url 'enrollments:list' %}" class="btn btn-outline-secondary">
+Clear
+</a>
+
+</div>
+
+</form>
+
+
+<form method="GET" class="row mb-4">
+
+<div class="col-md-3">
+
+<input
+type="text"
+name="q"
+class="form-control"
+placeholder="Search student..."
+value="{{ search_query }}">
+
+</div>
+
+
+<div class="col-md-3">
+
+<select name="course" class="form-control">
+
+<option value="">All Courses</option>
+
+{% for course in courses %}
+
+<option value="{{ course.id }}"
+{% if course.id|stringformat:"s" == selected_course %}selected{% endif %}>
+{{ course.title }}
+</option>
+
+{% endfor %}
+
+</select>
+
+</div>
+
+
+<div class="col-md-3">
+
+<select name="risk" class="form-control">
+
+<option value="">All Risk Levels</option>
+<option value="High">High Risk</option>
+<option value="Medium">Medium Risk</option>
+<option value="Low">Low Risk</option>
+
+</select>
+
+</div>
+
+
+<div class="col-md-3">
+
+<button class="btn btn-primary w-100">
+Apply Filters
+</button>
+
+</div>
+
+</form>
+
+{% endif %}
+
+<table class="table align-middle table-hover">
+
+<thead>
+<tr>
+    <th>Student</th>
+    <th>Course</th>
+    <th>Batch</th>
+    <th>Status</th>
+    <th>Access Until</th>
+    <th>Grade</th>
+    <th>AI Risk</th>
+    <th>Success Score</th>
+    <th>Actions</th>
+</tr>
+</thead>
+
+<tbody>
+{% for enrollment in enrollments %}
+<tr>
+
+<td>
+    <strong>{{ enrollment.student.username }}</strong><br>
+    <small class="text-muted">{{ enrollment.student.email }}</small>
+</td>
+
+<td>
+    <strong>{{ enrollment.batch.course.title }}</strong><br>
+    <small class="text-muted">{{ enrollment.batch.course.code }}</small>
+</td>
+
+<td>{{ enrollment.batch.name }}</td>
+
+<td>
+    {% if enrollment.is_expired %}
+        <span class="status-badge status-expired">Expired</span>
+    {% elif enrollment.status == "active" %}
+        <span class="status-badge status-active">Active</span>
+    {% else %}
+        <span class="status-badge status-dropped">Dropped</span>
+    {% endif %}
+</td>
+
+<td>
+    {% if enrollment.end_date %}
+        <span class="access-badge bg-light border">
+            {{ enrollment.end_date|date:"M d, Y" }}
+        </span>
+        {% if enrollment.is_expired %}
+            <br><small class="text-danger">Access Ended</small>
+        {% endif %}
+    {% else %}
+        <span class="text-muted">Unlimited</span>
+    {% endif %}
+</td>
+
+<td>
+    <span class="badge bg-primary">{{ enrollment.grade }}</span>
+</td>
+
+<!-- AI Risk Column -->
+<td>
+    {% if enrollment.risk_level == "Low" %}
+        <span class="badge bg-success">Low</span>
+    {% elif enrollment.risk_level == "Medium" %}
+        <span class="badge bg-warning text-dark">Medium</span>
+    {% else %}
+        <span class="badge bg-danger">High</span>
+    {% endif %}
+</td>
+
+<!-- Success Score Column -->
+<td>
+    <div class="progress" style="height:6px;">
+        <div class="progress-bar bg-dark"
+             style="--score: {{ enrollment.success_score }}; width: calc(var(--score) * 1%);">
+        </div>
+    </div>
+    <small class="fw-bold">{{ enrollment.success_score }}%</small>
+</td>
+
+<td>{{ enrollment.created_at|date:"M d, Y" }}</td>
+
+<td>
+    <a href="{% url 'attendance:sessions' enrollment.batch.id %}" 
+       class="btn btn-sm btn-outline-primary btn-action">
+       <i class="bi bi-calendar-check"></i> Attendance
+    </a>
+</td>
+
+</tr>
+{% endfor %}
+</tbody>
+
+</table>
+
+</div>
+
+{% endblock %}

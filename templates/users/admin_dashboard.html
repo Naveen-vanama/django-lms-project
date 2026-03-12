@@ -1,0 +1,343 @@
+{% extends 'base.html' %}
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block extra_css %}
+
+<style>
+
+/* ================= HERO ================= */
+.dashboard-hero {
+    background: linear-gradient(135deg, #6366f1, #3b82f6, #10b981);
+    padding: 50px;
+    border-radius: 25px;
+    color: white;
+    margin-bottom: 50px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.15);
+}
+
+/* ================= STAT CARDS ================= */
+.stat-card {
+    background: rgba(255,255,255,0.15);
+    backdrop-filter: blur(15px);
+    border-radius: 20px;
+    padding: 25px;
+    text-align: center;
+    transition: 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-8px);
+}
+
+.stat-number {
+    font-size: 2.2rem;
+    font-weight: 700;
+}
+
+/* ================= COURSE CARDS ================= */
+.course-card {
+    background: white;
+    border-radius: 20px;
+    padding: 25px;
+    transition: 0.3s ease;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+}
+
+.course-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+}
+
+/* ================= PROGRESS ================= */
+.progress {
+    height: 10px;
+    border-radius: 20px;
+    background: #e5e7eb;
+    overflow: hidden;
+}
+
+.progress-bar {
+    height: 100%;
+    border-radius: 20px;
+    transition: width 0.8s ease-in-out;
+}
+
+/* ================= CHART CARD ================= */
+.chart-card {
+    background: white;
+    border-radius: 25px;
+    padding: 30px;
+    box-shadow: 0 20px 45px rgba(0,0,0,0.08);
+    transition: 0.3s ease;
+}
+
+.chart-card:hover {
+    transform: translateY(-8px);
+}
+
+h4 {
+    font-weight: 600;
+}
+
+</style>
+
+{% endblock %}
+
+{% block content %}
+
+<div class="dashboard-hero">
+    <h2 class="fw-bold mb-4">🚀 Admin Analytics Dashboard</h2>
+
+```
+<div class="row">
+    <div class="col-md-3">
+        <div class="stat-card">
+            <h6>Total Enrollments</h6>
+            <div class="stat-number counter">{{ total_enrollments }}</div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="stat-card">
+            <h6>Total Courses</h6>
+            <div class="stat-number counter">{{ total_courses }}</div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="stat-card">
+            <h6>Total Students</h6>
+            <div class="stat-number counter">{{ total_students }}</div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="stat-card">
+            <h6>Total Instructors</h6>
+            <div class="stat-number counter">{{ total_instructors }}</div>
+        </div>
+    </div>
+</div>
+```
+
+</div>
+
+<!-- COURSE PERFORMANCE -->
+
+<h4 class="fw-bold mb-4">📚 Course Performance</h4>
+
+<div class="row mb-5">
+{% for course in courses %}
+<div class="col-md-4 mb-4">
+    <div class="course-card">
+
+```
+    <h5 class="fw-bold">{{ course.title }}</h5>
+    <small class="text-muted">Code: {{ course.code }}</small>
+
+    <div class="mt-4">
+        <div class="d-flex justify-content-between mb-2">
+            <span class="small text-muted">Enrollment</span>
+            <strong>{{ course.enrolled_students }} Students</strong>
+        </div>
+
+        <div class="progress">
+            <div class="progress-bar"
+                 style="width: {{ course.enrollment_percent }}%; background-color: {{ course.color }};">
+            </div>
+        </div>
+    </div>
+</div>
+```
+
+</div>
+{% endfor %}
+</div>
+
+<!-- CHART SECTION -->
+
+<div class="row">
+
+```
+<div class="col-lg-6 mb-4">
+    <div class="chart-card">
+        <h4>📊 Enrollment Analytics</h4>
+        <canvas id="enrollmentChart"></canvas>
+    </div>
+</div>
+
+<div class="col-lg-6 mb-4">
+    <div class="chart-card">
+        <h4>🧠 Risk Distribution</h4>
+        <canvas id="riskChart"></canvas>
+    </div>
+</div>
+```
+
+</div>
+
+<!-- NEW ATTENDANCE TREND CHART -->
+
+<div class="row">
+
+```
+<div class="col-lg-12 mb-4">
+    <div class="chart-card">
+        <h4>📅 Attendance Trend</h4>
+        <canvas id="attendanceTrendChart"></canvas>
+    </div>
+</div>
+```
+
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    // ================= DEFINE DATA =================
+    const labels = JSON.parse('{{ course_names|escapejs }}');
+    const dataValues = JSON.parse('{{ course_student_counts|escapejs }}');
+    const courseColors = JSON.parse('{{ course_colors|escapejs }}');
+
+    // ================= ENROLLMENT BAR CHART =================
+    const ctx = document.getElementById('enrollmentChart').getContext('2d');
+    let chart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: [],
+            datasets: [{
+                label: "Students per Course",
+                data: [],
+                backgroundColor: []
+            }]
+        },
+        options: {
+            responsive: true,
+            animation: {
+                duration: 800
+            }
+        }
+    });
+
+    function updateDashboard(){
+
+    fetch("{% url 'users:dashboard_data' %}")
+
+    .then(response => response.json())
+
+    .then(data => {
+
+    chart.data.labels = data.course_names;
+
+    chart.data.datasets[0].data = data.course_counts;
+
+    chart.data.datasets[0].backgroundColor = data.course_colors;
+
+    chart.update();
+
+    });
+
+    }
+
+    setInterval(updateDashboard, 5000);
+    updateDashboard();
+
+    // ================= RISK PIE CHART =================
+    const riskData = JSON.parse('{{ risk_data|escapejs }}');
+
+    new Chart(document.getElementById('riskChart'), {
+        type: 'pie',
+        data: {
+            labels: ['Low Risk', 'Medium Risk', 'High Risk'],
+            datasets: [{
+                data: riskData,
+                backgroundColor: [
+                    '#22c55e',
+                    '#f59e0b',
+                    '#ef4444'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { position: 'bottom' }
+            }
+        }
+    });
+
+    // ================= ATTENDANCE TREND CHART =================
+    const attendanceDates = JSON.parse('{{ attendance_dates|escapejs }}');
+    const attendanceCounts = JSON.parse('{{ attendance_counts|escapejs }}');
+
+    new Chart(document.getElementById('attendanceTrendChart'), {
+        type: 'line',
+        data: {
+            labels: attendanceDates,
+            datasets: [{
+                label: "Attendance Records",
+                data: attendanceCounts,
+                borderColor: "#3b82f6",
+                backgroundColor: "rgba(59,130,246,0.2)",
+                tension: 0.4,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { position: 'bottom' }
+            },
+            scales: {
+                y: { beginAtZero: true }
+            }
+        }
+    });
+
+});
+
+// ================= PROGRESS ANIMATION =================
+window.addEventListener("load", () => {
+    document.querySelectorAll(".progress-bar").forEach(bar => {
+        const width = bar.style.width;
+        bar.style.width = "0%";
+
+        setTimeout(() => {
+            bar.style.width = width;
+        }, 200);
+    });
+});
+
+// Animated Counter
+document.querySelectorAll(".counter").forEach(counter => {
+
+    const target = +counter.innerText;
+    counter.innerText = "0";
+
+    const updateCounter = () => {
+
+        const current = +counter.innerText;
+
+        const increment = target / 40;
+
+        if (current < target) {
+            counter.innerText = Math.ceil(current + increment);
+            setTimeout(updateCounter, 30);
+        } else {
+            counter.innerText = target;
+        }
+
+    };
+
+    updateCounter();
+
+});
+</script>
+
+{% endblock %}

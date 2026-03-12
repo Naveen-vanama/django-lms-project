@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<title>Verify OTP</title>
+
+<style>
+
+body{
+font-family: Arial;
+text-align:center;
+margin-top:100px;
+background:#f5f7fb;
+}
+
+.otp-container{
+display:flex;
+justify-content:center;
+gap:10px;
+margin:20px;
+}
+
+.otp-box{
+width:50px;
+height:55px;
+font-size:24px;
+text-align:center;
+border-radius:8px;
+border:2px solid #6366f1;
+outline:none;
+}
+
+button{
+padding:10px 25px;
+background:#6366f1;
+color:white;
+border:none;
+border-radius:6px;
+cursor:pointer;
+}
+
+button:hover{
+background:#4f46e5;
+}
+
+#resendBtn{
+display:block;
+margin-top:20px;
+color:#6366f1;
+text-decoration:none;
+}
+
+#timer{
+display:block;
+margin-top:5px;
+color:#888;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<h2>Enter OTP</h2>
+
+{% if messages %}
+  {% for message in messages %}
+  <div class="alert alert-{{ message.tags }} text-center">
+      {{ message }}
+  </div>
+  {% endfor %}
+{% endif %}
+
+<form method="POST" id="otpForm">
+{% csrf_token %}
+
+<div class="otp-container">
+
+<input type="text" maxlength="1" class="otp-box">
+<input type="text" maxlength="1" class="otp-box">
+<input type="text" maxlength="1" class="otp-box">
+<input type="text" maxlength="1" class="otp-box">
+<input type="text" maxlength="1" class="otp-box">
+<input type="text" maxlength="1" class="otp-box">
+
+</div>
+
+<input type="hidden" name="otp" id="otp">
+
+<button type="submit">Verify OTP</button>
+
+</form>
+
+<a href="{% url 'users:resend_otp' %}" id="resendBtn">Resend OTP</a>
+
+<span id="timer">60</span>
+
+
+<script>
+
+// OTP BOXES
+const boxes = document.querySelectorAll(".otp-box");
+
+boxes.forEach((box,index)=>{
+
+box.addEventListener("input",()=>{
+
+// allow only numbers
+box.value = box.value.replace(/[^0-9]/g,'');
+
+if(box.value.length === 1 && index < boxes.length-1){
+boxes[index+1].focus();
+}
+
+updateOTP();
+
+});
+
+// backspace support
+box.addEventListener("keydown",(e)=>{
+
+if(e.key === "Backspace" && box.value === "" && index > 0){
+boxes[index-1].focus();
+}
+
+});
+
+});
+
+
+function updateOTP(){
+
+let otp="";
+
+boxes.forEach(b=>{
+otp += b.value;
+});
+
+document.getElementById("otp").value = otp;
+
+// Auto submit when 6 digits entered
+if(otp.length === 6){
+document.getElementById("otpForm").submit();
+}
+
+}
+
+
+// TIMER
+let time = 60;
+
+let timer = document.getElementById("timer");
+let resendBtn = document.getElementById("resendBtn");
+
+resendBtn.style.pointerEvents = "none";
+resendBtn.style.opacity = "0.5";
+
+let countdown = setInterval(()=>{
+
+if(time > 0){
+
+time--;
+timer.innerText = "Resend in " + time + "s";
+
+}else{
+
+clearInterval(countdown);
+
+resendBtn.style.pointerEvents = "auto";
+resendBtn.style.opacity = "1";
+
+timer.innerText = "You can resend OTP";
+
+}
+
+},1000);
+
+</script>
+
+</body>
+</html>

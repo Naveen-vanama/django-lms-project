@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+{% block title %}{{ course.title }} – CollegePortal{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <a href="{% url 'courses:list' %}" class="text-muted small text-decoration-none">
+      <i class="bi bi-arrow-left me-1"></i>All Courses
+    </a>
+    <h4 class="fw-bold mb-0 mt-1">{{ course.title }}</h4>
+    <span class="badge bg-light text-dark border">{{ course.code }}</span>
+    <span class="badge {% if course.status == 'active' %}bg-success{% else %}bg-secondary{% endif %} ms-1">
+      {{ course.get_status_display }}
+    </span>
+  </div>
+  <div class="d-flex gap-2">
+    {% if user.is_admin_role or user.is_superuser %}
+    <a href="{% url 'courses:edit' course.pk %}" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-pencil me-1"></i>Edit
+    </a>
+    <a href="{% url 'courses:batch_create' course.pk %}" class="btn btn-sm" style="background:#4f46e5;color:#fff;">
+      <i class="bi bi-plus me-1"></i>New Batch
+    </a>
+    {% elif user.is_instructor and user == course.instructor %}
+    <a href="{% url 'courses:batch_create' course.pk %}" class="btn btn-sm" style="background:#4f46e5;color:#fff;">
+      <i class="bi bi-plus me-1"></i>New Batch
+    </a>
+    {% endif %}
+    <a href="{% url 'resources:list' course.pk %}" class="btn btn-outline-primary btn-sm">
+      <i class="bi bi-folder2-open me-1"></i>Resources
+    </a>
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-8">
+    <!-- Description -->
+    <div class="page-card mb-4">
+      <h6 class="fw-semibold mb-2">About this Course</h6>
+      <p class="text-muted mb-0">{{ course.description|default:"No description provided." }}</p>
+    </div>
+
+    <!-- Batches -->
+    <div class="page-card">
+      <h6 class="fw-semibold mb-3"><i class="bi bi-collection me-2 text-primary"></i>Batches</h6>
+      {% for batch in batches %}
+      <div class="border rounded-3 p-3 mb-3">
+        <div class="d-flex justify-content-between align-items-start">
+          <div>
+            <h6 class="fw-bold mb-1">{{ batch.name }}</h6>
+            <div class="text-muted small">
+              <i class="bi bi-calendar3 me-1"></i>
+              {{ batch.start_date|date:"M d, Y" }} – {{ batch.end_date|date:"M d, Y" }}
+            </div>
+            <div class="text-muted small mt-1">
+              <i class="bi bi-people me-1"></i>
+              {{ batch.enrollment_count }} / {{ batch.max_students }} students
+              {% if batch.is_full %}<span class="text-danger ms-1">(Full)</span>{% endif %}
+            </div>
+          </div>
+          <div class="d-flex gap-2">
+            {% if user.is_student %}
+              {% if batch.pk in student_enrolled_batch_ids %}
+              <span class="badge bg-success align-self-start">Enrolled</span>
+              {% if request.user.is_admin_role or request.user.is_superuser %}
+              <a href="{% url 'enrollments:unenroll' batch.pk %}"
+              class="btn btn-danger btn-sm">Drop</a>
+              {% endif %}
+              {% else %}
+              <a href="{% url 'enrollments:enroll' batch.pk %}" class="btn btn-sm {% if not batch.is_full %}btn-primary{% else %}btn-warning{% endif %}">
+                {% if batch.is_full %}Waitlist{% else %}Enroll{% endif %}
+              </a>
+              {% endif %}
+            {% endif %}
+            <a href="{% url 'attendance:sessions' batch.pk %}" class="btn btn-sm btn-outline-secondary">
+              <i class="bi bi-calendar-check"></i>
+            </a>
+            {% if user.is_admin_role or user.is_superuser or user == course.instructor %}
+            <a href="{% url 'attendance:take' batch.pk %}" class="btn btn-sm btn-outline-primary">
+              Take Attendance
+            </a>
+            <a href="{% url 'courses:group_create' batch.pk %}" class="btn btn-sm btn-outline-secondary">
+              <i class="bi bi-diagram-3"></i> Group
+            </a>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      {% empty %}
+      <p class="text-muted">No batches created yet.</p>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Sidebar Info -->
+  <div class="col-lg-4">
+    <div class="page-card mb-3">
+      <h6 class="fw-semibold mb-3">Course Info</h6>
+      <dl class="row small mb-0">
+        <dt class="col-5 text-muted">Instructor</dt>
+        <dd class="col-7">{{ course.instructor.get_full_name|default:course.instructor.username|default:"TBA" }}</dd>
+        <dt class="col-5 text-muted">Credits</dt>
+        <dd class="col-7">{{ course.credits }}</dd>
+        <dt class="col-5 text-muted">Batches</dt>
+        <dd class="col-7">{{ batches.count }}</dd>
+        <dt class="col-5 text-muted">Created</dt>
+        <dd class="col-7">{{ course.created_at|date:"M d, Y" }}</dd>
+      </dl>
+    </div>
+  </div>
+</div>
+{% endblock %}

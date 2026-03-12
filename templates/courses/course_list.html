@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+{% block title %}Courses – CollegePortal{% endblock %}
+
+{% block extra_css %}
+<style>
+
+/* Smaller image */
+.course-image {
+    width: 100%;
+    height: 160px;      /* 🔥 Reduced size */
+    object-fit: cover;
+    border-radius: 12px;
+}
+
+/* Card styling */
+.course-card {
+    border-radius: 18px;
+    transition: 0.3s ease;
+    background: #ffffff;
+}
+
+.course-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+}
+
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h4 class="fw-bold mb-0">
+    <i class="bi bi-journal-bookmark-fill me-2"></i>Courses
+  </h4>
+
+  {% if user.is_admin_role or user.is_superuser %}
+  <a href="{% url 'courses:create' %}" class="btn" style="background:#4f46e5;color:#fff;">
+    <i class="bi bi-plus-lg me-1"></i> New Course
+  </a>
+  {% endif %}
+</div>
+
+<form method="get" class="mb-4">
+  <div class="input-group" style="max-width:420px;">
+    <input type="text" name="q" value="{{ query }}" class="form-control" placeholder="Search courses…">
+    <button class="btn btn-outline-secondary" type="submit">
+      <i class="bi bi-search"></i>
+    </button>
+  </div>
+</form>
+
+<div class="row g-4">
+  {% for course in courses %}
+  <div class="col-md-6 col-xl-4">
+    <div class="card course-card h-100 shadow-sm border-0 p-3">
+
+      {% if course.thumbnail %}
+        <img src="{{ course.thumbnail.url }}" class="course-image mb-3">
+      {% else %}
+        <div class="course-image mb-3 d-flex align-items-center justify-content-center"
+             style="background:linear-gradient(135deg,#ede9fe,#ddd6fe);">
+          <i class="bi bi-journal-bookmark-fill text-primary" style="font-size:2.5rem;"></i>
+        </div>
+      {% endif %}
+
+      <div class="flex-grow-1">
+
+        <div class="d-flex justify-content-between align-items-start">
+          <span class="badge bg-light text-dark border small">
+            {{ course.code }}
+          </span>
+
+          <span class="badge {% if course.status == 'active' %}bg-success{% else %}bg-secondary{% endif %}">
+            {{ course.get_status_display }}
+          </span>
+        </div>
+
+        <h6 class="fw-bold mt-2 mb-1">{{ course.title }}</h6>
+
+        <p class="text-muted small">
+          {{ course.description|truncatewords:18 }}
+        </p>
+
+        <div class="text-muted small">
+          <i class="bi bi-person-fill me-1"></i>
+          {{ course.instructor.get_full_name|default:course.instructor.username|default:"Unassigned" }}
+        </div>
+
+      </div>
+
+      <div class="d-flex gap-2 mt-3 pt-2 border-top">
+        <a href="{% url 'courses:detail' course.pk %}" class="btn btn-sm btn-outline-primary flex-grow-1">
+          View Details
+        </a>
+
+        {% if user.is_admin_role or user.is_superuser %}
+        <a href="{% url 'courses:edit' course.pk %}" class="btn btn-sm btn-outline-secondary">
+          <i class="bi bi-pencil"></i>
+        </a>
+        {% endif %}
+      </div>
+
+    </div>
+  </div>
+  {% empty %}
+  <div class="col-12 text-center py-5 text-muted">
+    <i class="bi bi-journal-x" style="font-size:3rem;"></i>
+    <p class="mt-2">No courses found.</p>
+  </div>
+  {% endfor %}
+</div>
+
+{% endblock %}

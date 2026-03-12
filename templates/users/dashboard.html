@@ -1,0 +1,187 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold">Dashboard</h2>
+        <span class="text-muted">
+            Welcome back, {{ user.get_full_name|default:user.username }} 👋
+        </span>
+    </div>
+
+    {% if user.is_admin_role or user.is_superuser %}
+
+    <!-- ================= ADMIN DASHBOARD ================= -->
+    <div class="row g-4 mb-4">
+
+        <div class="col-md-3">
+            <div class="stat-card bg-gradient-primary">
+                <h6>Total Users</h6>
+                <h2 class="counter" data-target="{{ total_users }}">0</h2>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="stat-card bg-gradient-success">
+                <h6>Total Courses</h6>
+                <h2 class="counter" data-target="{{ total_courses }}">0</h2>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="stat-card bg-gradient-warning">
+                <h6>Students</h6>
+                <h2 class="counter" data-target="{{ total_students }}">0</h2>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="stat-card bg-gradient-danger">
+                <h6>Instructors</h6>
+                <h2 class="counter" data-target="{{ total_instructors }}">0</h2>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Recent Enrollments -->
+    <div class="card shadow-sm border-0 rounded-4">
+        <div class="card-body">
+            <h5 class="fw-semibold mb-3">Recent Enrollments</h5>
+            <table class="table table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>Student</th>
+                        <th>Course</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for e in recent_enrollments %}
+                    <tr>
+                        <td>{{ e.student.username }}</td>
+                        <td>{{ e.batch.course.title }}</td>
+                        <td>{{ e.enrolled_at|date:"M d, Y" }}</td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="3" class="text-center text-muted">
+                            No enrollments yet.
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    {% elif user.is_instructor %}
+
+    <!-- ================= INSTRUCTOR DASHBOARD ================= -->
+    <div class="row g-4 mb-4">
+
+        <div class="col-md-4">
+            <div class="stat-card bg-gradient-primary">
+                <h6>Your Courses</h6>
+                <h2 class="counter" data-target="{{ courses.count }}">0</h2>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="stat-card bg-gradient-success">
+                <h6>Total Students</h6>
+                <h2 class="counter" data-target="{{ total_students }}">0</h2>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="card shadow-sm border-0 rounded-4">
+        <div class="card-body">
+            <h5>Your Courses</h5>
+            <ul class="list-group list-group-flush">
+                {% for course in courses %}
+                    <li class="list-group-item d-flex justify-content-between">
+                        {{ course.title }}
+                        <span class="badge bg-primary rounded-pill">
+                            {{ course.enrollment_count }} students
+                        </span>
+                    </li>
+                {% empty %}
+                    <li class="list-group-item text-muted">
+                        No courses assigned.
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+
+    {% else %}
+
+    <!-- ================= STUDENT DASHBOARD ================= -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-4">
+            <div class="stat-card bg-gradient-primary">
+                <h6>Enrolled Courses</h6>
+                <h2 class="counter" data-target="{{ total_courses }}">0</h2>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0 rounded-4">
+        <div class="card-body">
+            <h5>Your Courses</h5>
+            <ul class="list-group list-group-flush">
+                {% for e in enrollments %}
+                    <li class="list-group-item d-flex justify-content-between">
+                        {{ e.batch.course.title }}
+                        <span class="badge bg-success">
+                            {{ e.batch.course.instructor.username }}
+                        </span>
+                    </li>
+                {% empty %}
+                    <li class="list-group-item text-muted">
+                        You are not enrolled in any courses.
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+
+    {% endif %}
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    const counters = document.querySelectorAll(".counter");
+
+    counters.forEach(counter => {
+
+        const updateCount = () => {
+            const target = +counter.getAttribute("data-target");
+            const current = +counter.innerText;
+
+            const speed = 40;  
+            const increment = Math.ceil(target / speed);
+
+            if (current < target) {
+                counter.innerText = current + increment;
+                setTimeout(updateCount, 20);
+            } else {
+                counter.innerText = target;
+            }
+        };
+
+        updateCount();
+    });
+
+});
+</script>
+{% endblock %}

@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% block title %}Attendance Sessions{% endblock %}
+
+{% block content %}
+
+<h3>📅 Attendance Sessions - {{ batch.name }}</h3>
+
+<a href="{% url 'attendance:take' batch.id %}" class="btn btn-primary mb-3">
+    Take Attendance
+</a>
+
+<table class="table">
+<thead>
+<tr>
+    <th>Date</th>
+    <th>Topic</th>
+    <th>Actions</th>
+</tr>
+</thead>
+<tbody>
+{% for session in sessions %}
+<tr>
+    <td>{{ session.date }}</td>
+    <td>{{ session.topic }}</td>
+    <td>
+        <a href="{% url 'attendance:report' batch.id %}" 
+           class="btn btn-sm btn-outline-success">
+            View Report
+        </a>
+    </td>
+</tr>
+{% empty %}
+<tr>
+<td colspan="3">No sessions yet.</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+
+{% endblock %}
